@@ -47,3 +47,26 @@ class DAO():
         cursor.close()
         conn.close()
         return result
+
+    @staticmethod
+    def getSalariesTeam(year, idMapTeams): #prendere salari delle squadre, bisogna vedere anche in quale squadra il giocatore ha giocato (piò aver giocato in più squadre)
+        conn = DBConnect.get_connection()
+
+        cursor = conn.cursor(dictionary=True)
+
+        query = """SELECT t.ID, t.teamCode, sum(s.salary) as totSalary
+                    FROM salaries s, teams t, appearances a 
+                    WHERE s.`year` = t.`year` AND s.`year` = a.`year` AND a.`year` = %s
+                    AND t.ID = a.teamID AND s.playerID = a.playerID
+                    GROUP BY t.ID, t.teamCode"""
+
+        cursor.execute(query, (year,))
+
+        mapSalary = {}
+
+        for row in cursor:
+           mapSalary[idMapTeams[row["ID"]]] = row["totSalary"] #chiave oggetto di tipo team, valore salario
+
+        cursor.close()
+        conn.close()
+        return mapSalary
